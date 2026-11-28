@@ -4,15 +4,23 @@ on:
   # Every published release: by release-please (release.yml) or by hand.
   release:
     types: [published]
+  # A readme.txt that only raises "Tested up to" (or "Requires …") goes out without a release.
+  push:
+    branches: [main]
+    paths: [readme.txt]
+  workflow_dispatch:
 
 permissions:
-  contents: write # attach the zip to the GitHub release
+  contents: read
 
 jobs:
   deploy:
     name: Deploy ${{ github.event.release.tag_name }}
+    if: ${{ github.event_name == 'release' }}
     runs-on: ubuntu-latest
     environment: wordpress.org
+    permissions:
+      contents: write # attach the zip to the GitHub release
     env:
       TAG: ${{ github.event.release.tag_name }}
     steps:
@@ -38,3 +46,37 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" "${{ steps.deploy.outputs.zip-path }}" --clobber
+
+  readme-check:
+    # Outside the environment, so there is only a deployment to approve when there is something to publish.
+    name: Check readme.txt for a release-free update
+    if: ${{ github.event_name != 'release' }}
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0 # the release tags
+      - id: check
+        run: .github/scripts/check-readme-only.sh
+
+  readme:
+    name: Update readme.txt on WordPress.org
+    needs: readme-check
+    if: ${{ needs.readme-check.outputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    environment: wordpress.org
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # Copies readme.txt to trunk/ and to tags/<Stable tag>/, where WordPress.org reads it. Only
+      # readme.txt: the code and the assets (screenshots may show unreleased features) wait for a release.
+      - name: Update readme.txt in WordPress.org SVN
+        uses: 10up/action-wordpress-plugin-asset-update@2480306f6f693672726d08b5917ea114cb2825f7 # stable
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: wp-mail-validator
+          IGNORE_OTHER_FILES: true
+          SKIP_ASSETS: true

@@ -92,6 +92,8 @@ Releases are made by [release-please](https://github.com/googleapis/release-plea
 
 CI checks that all version numbers agree (`.github/scripts/check-versions.sh`). The upgrade notice in `readme.txt` is still written by hand, in the release pull request.
 
+A new WordPress version needs no release: raise `Tested up to` in `readme.txt` (a `chore(readme): …` pull request). After the merge, the deploy workflow copies `readme.txt` to SVN `trunk/` and to the tag of the `Stable tag` once you approve it. It does that only if nothing but `Tested up to`, `Requires at least` or `Requires PHP` changed since that tag (`.github/scripts/check-readme-only.sh`); any other change to `readme.txt` waits for the next release, so the plugin page never describes unreleased code.
+
 Banners, icons and screenshots for the plugin page go into `.wordpress-org/` (`banner-1544x500.png`, `icon-256x256.png`, `screenshot-1.png`, …); the deploy workflow uploads them to SVN `assets/`. Sources and the render command for banner and icon are in `assets-src/`.
 
 ## Contributing
