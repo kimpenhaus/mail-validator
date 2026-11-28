@@ -48,7 +48,7 @@ jobs:
         run: gh release upload "$TAG" "${{ steps.deploy.outputs.zip-path }}" --clobber
 
   readme-check:
-    # Outside the environment, so there is only a deployment to approve when there is something to publish.
+    # Outside the environment, so a deployment is only recorded when there is something to publish.
     name: Check readme.txt for a release-free update
     if: ${{ github.event_name != 'release' }}
     runs-on: ubuntu-latest
