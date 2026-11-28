@@ -80,19 +80,18 @@ docker run --rm -v "$PWD":/app -w /app php:8.4-cli vendor/bin/phpunit
 | `readme.txt` | Plugin page on WordPress.org – keep it in sync with releases |
 | `.distignore` | Files that are **not** shipped to WordPress.org |
 
-CI runs the tests on PHP 7.4 – 8.4, the coding standards and the official [Plugin Check](https://wordpress.org/plugins/plugin-check/) on every pull request.
+CI runs the tests on PHP 7.4 – 8.6, the coding standards and the official [Plugin Check](https://wordpress.org/plugins/plugin-check/) on every pull request.
 
 ## Releasing
 
 Releases are made by [release-please](https://github.com/googleapis/release-please) from the pull request titles ([Conventional Commits](https://www.conventionalcommits.org/)): `feat(…):` → new minor version (while below 1.0), `fix(…):` / `perf(…):` → patch, `docs(…):`, `chore(…):`, `ci(…):`, … → no release. Every title needs one of the scopes listed in `.github/workflows/pr-title.yml`, e.g. `feat(integrations): …`, `fix(checker): …`, and a summary in lowercase without a final period.
 
 1. release-please keeps a pull request **"chore(release): x.y.z"** open. It bumps the version in the plugin header, `WP_MAIL_VALIDATOR_VERSION` and the manifest, and adds the entry to `CHANGELOG.md`; a workflow copies that entry and the `Stable tag` into `readme.txt` (`.github/scripts/sync-readme.py`). Edit the changelog in that pull request if you like – `readme.txt` follows.
-2. Merge it: release-please creates the tag and the GitHub release.
-3. Approve the deployment in the *Actions* tab. The workflow deploys to WordPress.org (SVN) and attaches the zip to the release.
+2. Merge it: release-please creates the tag and the GitHub release. The deploy workflow then deploys to WordPress.org (SVN) and attaches the zip to the release.
 
-CI checks that all version numbers agree (`.github/scripts/check-versions.sh`). The upgrade notice in `readme.txt` is still written by hand, in the release pull request.
+The SVN credentials are secrets of the `wordpress.org` environment, which only release tags (`*.*.*`) and `main` may use. CI checks that all version numbers agree (`.github/scripts/check-versions.sh`). The upgrade notice in `readme.txt` is still written by hand, in the release pull request.
 
-A new WordPress version needs no release: raise `Tested up to` in `readme.txt` (a `chore(readme): …` pull request). After the merge, the deploy workflow copies `readme.txt` to SVN `trunk/` and to the tag of the `Stable tag` once you approve it. It does that only if nothing but `Tested up to`, `Requires at least` or `Requires PHP` changed since that tag (`.github/scripts/check-readme-only.sh`); any other change to `readme.txt` waits for the next release, so the plugin page never describes unreleased code.
+A new WordPress version needs no release: raise `Tested up to` in `readme.txt` (a `chore(readme): …` pull request). After the merge, the deploy workflow copies `readme.txt` to SVN `trunk/` and to the tag of the `Stable tag`. It does that only if nothing but `Tested up to`, `Requires at least` or `Requires PHP` changed since that tag (`.github/scripts/check-readme-only.sh`); any other change to `readme.txt` waits for the next release, so the plugin page never describes unreleased code.
 
 Banners, icons and screenshots for the plugin page go into `.wordpress-org/` (`banner-1544x500.png`, `icon-256x256.png`, `screenshot-1.png`, …); the deploy workflow uploads them to SVN `assets/`. Sources and the render command for banner and icon are in `assets-src/`.
 

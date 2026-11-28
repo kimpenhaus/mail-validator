@@ -22,4 +22,4 @@ Thanks for helping to improve Mail Validator!
 
 ## Releases
 
-Releases are made by the maintainer with release-please: merging its release pull request publishes a GitHub release, which deploys the plugin to WordPress.org after manual approval.
+Releases are made by the maintainer with release-please: merging its release pull request publishes a GitHub release, which deploys the plugin to WordPress.org.
